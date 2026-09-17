@@ -21,7 +21,7 @@ IFS=',' read -ra MODEL_LIST <<< "$RUN_MODELS"
 # 数据
 export DATASET_NAME=${DATASET_NAME:-wildchat}
 export DATASET_LIMIT=${DATASET_LIMIT:-${WILDCHAT_LIMIT:--1}}
-# Clone https://github.com/neuqrui/LLM-Safety-Eval and point EVAL_LLM_SAFETY_DIR at it
+# Point EVAL_LLM_SAFETY_DIR at a local eval suite
 # if you need WildChat / WildJailbreak loaders for analysis scripts.
 export EVAL_LLM_SAFETY_DIR=${EVAL_LLM_SAFETY_DIR:-}
 

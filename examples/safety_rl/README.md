@@ -15,4 +15,4 @@
 
 完整安装、评测与消融说明见仓库根目录 [README.md](../../README.md)。
 
-安全评测请使用独立仓库：[LLM-Safety-Eval](https://github.com/neuqrui/LLM-Safety-Eval)。
+安全评测数据通过环境变量 `EVAL_LLM_SAFETY_DIR` 指向本地评测套件。

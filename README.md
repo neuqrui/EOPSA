@@ -5,8 +5,7 @@
 
 <p align="center">
   <a href="#citation">📄 Paper</a> &nbsp;·&nbsp;
-  <a href=".">💻 Code</a> &nbsp;·&nbsp;
-  <a href="https://huggingface.co/collections/neuqrui/eopsa">🤗 Model</a>
+  <a href=".">💻 Code</a>
 </p>
 </div>
 
@@ -63,22 +62,6 @@ EOPSA is implemented on a modified [veRL](https://github.com/volcengine/verl) tr
 | Safety-critical set `K` | `pivot,intent,risk_wo_same` |
 | Forward KL `KL(T \|\| S)` | `DISTILLATION_LOSS_TYPE=topk_forward_kl` |
 
-## Resources
-
-| Resource | Location |
-|----------|----------|
-| Model weights | [huggingface.co/collections/neuqrui/eopsa](https://huggingface.co/collections/neuqrui/eopsa) |
-| Training code | this repository |
-| Safety evaluation | [LLM-Safety-Eval](https://github.com/neuqrui/LLM-Safety-Eval) |
-
-Released checkpoints:
-
-- [EOPSA-Qwen3-1.7B](https://huggingface.co/neuqrui/EOPSA-Qwen3-1.7B)
-- [EOPSA-Qwen3-4B](https://huggingface.co/neuqrui/EOPSA-qwen3-4B)
-- [EOPSA-Qwen3-14B](https://huggingface.co/neuqrui/EOPSA-Qwen3-14B)
-- [EOPSA-Qwen3-32B](https://huggingface.co/neuqrui/EOPSA-Qwen3-32B)
-- [EOPSA-R1-7B](https://huggingface.co/neuqrui/EOPSA-R1-7B)
-
 ## Getting Started
 
 Python 3.10+ and NVIDIA GPUs (paper runs used H200 with FSDP + vLLM).
@@ -109,13 +92,13 @@ The launcher defaults match the paper: ARS on, Selective Distillation on, 200 st
 | `examples/safety_rl/opsa_scripts/` | Offline lexicon extraction (appendix) |
 | `verl/` | Training backend |
 
-Safety / over-refusal evaluation (WildJailbreak, StrongReject, HarmBench, WildChat, XSTest, OKTest) is reproduced with [LLM-Safety-Eval](https://github.com/neuqrui/LLM-Safety-Eval). Point analysis scripts at a local clone with `EVAL_LLM_SAFETY_DIR`.
+Safety / over-refusal evaluation covers WildJailbreak, StrongReject, HarmBench, WildChat, XSTest, and OKTest. Analysis scripts read datasets from `EVAL_LLM_SAFETY_DIR` if you keep a local eval suite.
 
 Do not commit secrets. Copy [`.env.example`](.env.example) and export keys only if you use an API judge or SwanLab.
 
 ## License
 
-This repository is released under the Apache License 2.0. It includes a modified copy of [veRL](https://github.com/volcengine/verl). See [`LICENSE`](LICENSE) and the Hugging Face model cards for additional terms.
+This repository is released under the Apache License 2.0. It includes a modified copy of [veRL](https://github.com/volcengine/verl). See [`LICENSE`](LICENSE) for additional terms.
 
 ## Citation
 

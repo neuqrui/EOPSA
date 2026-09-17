@@ -82,8 +82,8 @@ def get_models():
     return {k: MODELS[k] for k in _MODELS_TO_RUN}
 
 # ============================================================
-# Safety-eval datasets: clone https://github.com/neuqrui/LLM-Safety-Eval
-# and set EVAL_LLM_SAFETY_DIR (or place the clone next to this repo).
+# Safety-eval datasets: set EVAL_LLM_SAFETY_DIR to a local eval suite
+# (or place a folder named LLM-Safety-Eval next to this repo).
 _DEFAULT_EVAL_DIR = os.environ.get("EVAL_LLM_SAFETY_DIR", "").strip()
 if not _DEFAULT_EVAL_DIR:
     for _cand in (
