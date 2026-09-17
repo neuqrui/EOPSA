@@ -122,11 +122,10 @@ This repository is released under the Apache License 2.0. It includes a modified
 <a id="citation"></a>
 
 ```bibtex
-@inproceedings{eopsa2027,
-  title     = {EOPSA: Efficient On-Policy Self-Distilled Safety Alignment},
-  author    = {},
-  booktitle = {International Conference on Learning Representations},
-  year      = {2027}
+@misc{eopsa2026,
+  title  = {EOPSA: Efficient On-Policy Self-Distilled Safety Alignment},
+  author = {},
+  year   = {2026}
 }
 ```
 
