@@ -1,0 +1,23 @@
+{
+  "n": 100,
+  "target": 100,
+  "scanned": 773,
+  "cand_n": 1200,
+  "seed": 42,
+  "model": "Qwen/Qwen3-1.7B",
+  "guard": "meta-llama/Llama-Guard-3-8B",
+  "source": "examples/safety_rl/datasets/safety_ds_safechain_dsr100_h4400_b2200/train.jsonl",
+  "filter": "data_type==safety & safechain_label in {adversarial_harmful,vanilla_harmful} & LlamaGuard unsafe",
+  "label_counts": {
+    "adversarial_harmful": 62,
+    "vanilla_harmful": 38
+  },
+  "settings": {
+    "enable_thinking": true,
+    "temperature": 0.5,
+    "top_p": 0.95,
+    "max_tokens": 4096
+  },
+  "out_jsonl": "examples/safety_rl/datasets/ars_safechain100_fail_qwen3-1.7b/val_harmful_fail100_qwen3-1.7b.jsonl",
+  "model_tag": "qwen3-1.7b"
+}

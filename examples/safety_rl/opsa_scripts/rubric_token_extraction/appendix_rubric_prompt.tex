@@ -1,0 +1,151 @@
+% =============================================================================
+% Final LLM user prompt for per-sample rubric classification (Appendix)
+% Requires \begin{promptbox}...\end{promptbox} defined in main preamble.
+% Usage: \input{appendix_rubric_prompt.tex}
+% =============================================================================
+
+\subsection{Per-Sample LLM Judge Prompt}
+\label{app:rubric-prompt}
+
+Each hold-out harmful sample triggers one API call with a single user message.
+Surface-equal pairs ($s\!=\!t$) are pre-labeled as \texttt{consistent} by a deterministic
+rule and are excluded from \texttt{\{\{ PAIR\_LINES \}\}}.
+The string below is the exact \texttt{content} field sent to the judge
+(\texttt{gpt-4o-mini}, temperature~$0$).
+Only the four rubric blocks and the Input block are filled at runtime; Task and Output
+are fixed.
+
+\begin{promptbox}{LLM Judge Prompt for Token-Pair Classification}
+
+## Task
+
+You classify high-KL (student\_top1, teacher\_top1) token pairs for offline rule extraction.
+
+We distill a student LLM toward a teacher that sees privileged safety guidance, while
+the student sees only the user query. At high forward-KL positions in the student's
+rollout, we compare the top-1 token preferred by the student versus the teacher.
+Your job is to label each such pair with a semantic category so that we can aggregate
+family-specific, query-universal lexicons (PIVOT\_STU/TEA, INTENT\_STU/TEA, RISK, FUNC,
+and intent pairs) for training-time token filtering.
+
+Use the user query and the student response below for context, but extract only tokens
+that generalize across queries---not query-specific content nouns.
+
+For each listed pair, assign **at most one** extractable category:
+  pivot | intent | risk | function
+
+If a pair does not belong to any of the four, use category=null.
+
+Priority when ambiguous: pivot > risk > intent > function.
+
+\vspace{1ex}
+
+---
+## Pivot
+
+\texttt{\{\{ RUBRIC\_PIVOT \}\}}
+
+\vspace{1ex}
+
+---
+## Intent
+
+\texttt{\{\{ RUBRIC\_INTENT \}\}}
+
+\vspace{1ex}
+
+---
+## Risk
+
+\texttt{\{\{ RUBRIC\_RISK \}\}}
+
+\vspace{1ex}
+
+---
+## Function
+
+\texttt{\{\{ RUBRIC\_FUNCTION \}\}}
+
+\vspace{1ex}
+
+---
+## Input
+
+User query:
+
+\texttt{\{\{ QUERY \}\}}
+
+\vspace{1ex}
+
+Student response:
+
+\texttt{\{\{ STUDENT\_RESPONSE \}\}}
+
+\vspace{1ex}
+
+Top-\texttt{\{\{ N \}\}} high-KL token pairs (student\_top1 vs teacher\_top1):
+
+\texttt{\{\{ PAIR\_LINES \}\}}
+
+\vspace{1ex}
+
+---
+## Output
+
+Return ONE JSON object (no markdown fence). Label exactly the pairs listed above.
+Use rank to match input.
+
+Extraction mapping:
+  pivot   -> **pivot\_tokens**: only discourse/structural pivot cue(s) from this pair
+            (student-side -> PIVOT\_STU, teacher-side -> PIVOT\_TEA)
+  intent  -> student\_top1 -> INTENT\_STU, teacher\_top1 -> INTENT\_TEA;
+            (student, teacher) -> \_INTENT\_PAIRS
+            ONLY if stu->tea is a real safety-evaluation framing shift
+            (not pronoun/person opener swaps)
+  risk    -> **risk\_tokens**: only risk-related token(s) from this pair
+            (one or both sides, but list risk token(s) only---not the whole pair)
+  function-> **function\_tokens**: only function/stop token(s) from this pair
+
+Schema:
+\{
+  "pair\_labels": [
+    \{
+      "rank": 1,
+      "category": "pivot|intent|risk|function|null",
+      "pivot\_tokens": [],
+      "risk\_tokens": [],
+      "function\_tokens": []
+    \},
+    ...
+  ]
+\}
+
+Rules:
+- One entry per listed rank only.
+- category=null -> all token lists must be [].
+- category=pivot -> pivot\_tokens must list only the pivot/transition cue(s) from the pair;
+  omit non-pivot tokens.
+- category=risk -> risk\_tokens must list only risk-related token(s) from the pair;
+  omit non-risk tokens.
+- category=function -> function\_tokens must be non-empty; list only function/stop
+  token(s); omit content words.
+- category=intent -> leave pivot\_tokens, risk\_tokens, and function\_tokens as [];
+  label intent ONLY for stu->tea safety-evaluation framing (e.g., understand->recognize),
+  NOT for The->I / Maybe->I / they->I style pronoun or person switches (use null).
+- Unused token lists for a category must be [].
+
+\end{promptbox}
+
+\paragraph{Runtime bindings.}
+\texttt{\{\{ RUBRIC\_PIVOT \}\}}, \texttt{\{\{ RUBRIC\_INTENT \}\}},
+\texttt{\{\{ RUBRIC\_RISK \}\}}, and \texttt{\{\{ RUBRIC\_FUNCTION \}\}} are fixed
+text (see the Pivot / Intent / Risk / Function rubric boxes in
+Appendix~\ref{app:classifier:rubrics}).
+\texttt{\{\{ QUERY \}\}} is the harmful user query;
+\texttt{\{\{ STUDENT\_RESPONSE \}\}} is the student rollout;
+\texttt{\{\{ N \}\}} is the number of disagreeing pairs shown;
+\texttt{\{\{ PAIR\_LINES \}\}} lists one line per pair, e.g.:
+
+\begin{promptbox}{Example pair line}
+  rank=3  student\_top1='understand'  teacher\_top1='recognize'  forward\_kl=0.4521
+\end{promptbox}

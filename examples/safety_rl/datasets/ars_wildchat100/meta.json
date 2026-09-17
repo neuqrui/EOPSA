@@ -1,0 +1,7 @@
+{
+  "n": 100,
+  "source_pipeline": "scripts/outputs/student_prefix_continue/wildchat/qwen3-4b_prefix_pipeline.json",
+  "dataset": "wildchat",
+  "model": "qwen3-4b",
+  "note": "Exact 100 WildChat questions used in prefix-continue / plotting pipeline"
+}

@@ -1,0 +1,22 @@
+{#- Teacher prompt: static safe_reference + dynamic verifier diagnosis on student rollout. -#}
+{{ question | default(problem) | trim }}
+
+[Hints for answering]
+Use the following guidance when formulating your answer.
+{{ hint | trim }}
+
+{% if include_verifier_hint %}
+[Verifier feedback on the student's attempt]
+Use this feedback to refine your response: if the thinking or answer was correct, adopt the good patterns; if incorrect, learn from the mistakes and avoid repeating them.
+{% if think_diagnosis | trim %}
+Think evaluation: {{ think_diagnosis | trim }}
+{% endif %}
+{% if answer_diagnosis | trim %}
+Answer evaluation: {{ answer_diagnosis | trim }}
+{% endif %}
+{% if verifier_feedback | trim and not (think_diagnosis | trim or answer_diagnosis | trim) %}
+{{ verifier_feedback | trim }}
+{% endif %}
+{% endif %}
+
+Now begin your answer. Do not mention, quote, or reveal the hints or verifier feedback above in your response.

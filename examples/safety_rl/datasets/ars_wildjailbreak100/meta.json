@@ -1,0 +1,10 @@
+{
+  "n": 100,
+  "seed": 42,
+  "source": "allenai/wildjailbreak adversarial_harmful",
+  "pool_unique": 2000,
+  "excluded_overlap_val_train": 72,
+  "cand_after_exclude": 1928,
+  "filter": "adversarial_harmful; exclude prompts already in DSR100 val_wjwc/train wildjailbreak",
+  "out_jsonl": "examples/safety_rl/datasets/ars_wildjailbreak100/val_harmful.jsonl"
+}

@@ -1,0 +1,10 @@
+{
+  "output": "datasets/safety_ds_safechain_dsr100_h4400_b2200/val_wjwc_mix.jsonl",
+  "source_val": "datasets/safety_ds_safechain_dsr100_h4400_b2200/val.jsonl",
+  "n_harmful": 100,
+  "n_benign": 50,
+  "wj_ratio": 0.5,
+  "seed": 42,
+  "hint_mode": "hard",
+  "exclude_train": "datasets/safety_ds_safechain_dsr100_h4400_b2200/train.jsonl"
+}

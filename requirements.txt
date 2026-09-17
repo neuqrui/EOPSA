@@ -1,0 +1,24 @@
+accelerate
+codetiming
+datasets
+# flash-attn>=2.4.3
+liger-kernel
+mathruler
+numpy
+omegaconf
+pandas
+peft
+pillow
+pyarrow>=15.0.0
+pylatexenc
+qwen-vl-utils[decord]==0.0.14
+ray[default]
+tensordict
+torchdata
+transformers==4.57.3
+vllm==0.11.0
+wandb
+# For Reward
+rouge_score
+math_verify
+mathruler

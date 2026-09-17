@@ -1,0 +1,184 @@
+# Pure OPSD (on-policy self-distillation) for SAFETY — no GRPO / no RLSD reweighting.
+#
+# Pipeline:
+#   1. Student rollout on `problem` only (safety_student.jinja).
+#   2. Teacher forward on the SAME student response with privileged hint (`safe_reference`).
+#   3. Minimize KL(T || S) or JSD between teacher/student token distributions.
+#   4. Training uses noop reward (distillation loss only); validation is selectable:
+#        VAL_METHOD=reward     -> safety_reward.py (API/rule judge)
+#        VAL_METHOD=llamaguard -> llamaguard_reward.py (Llama-Guard-3 DSR on harmful,
+#                                same chat+parse rule as eval_llm_safety run_eval_guard_vllm)
+
+data:
+  train_files: examples/safety_rl/datasets/safety_ds_safechain/train.jsonl
+  val_files: examples/safety_rl/datasets/safety_ds_safechain/val.jsonl
+
+  prompt_key: problem
+  answer_key: answer
+  image_key: images
+  video_key: videos
+  trajectory_key: safe_reference   # privileged hint column -> batch["trajectory"]
+
+  image_dir: null
+  max_prompt_length: 4096
+  max_response_length: 128           # initial training rollout / distillation max tokens (ARS may expand)
+  val_max_response_length: 4096      # validation / ARS probe max tokens
+  # Dynamic student rollout length schedule (only when enable_dynamic_max_response_length=true):
+  enable_dynamic_max_response_length: false
+  dynamic_max_response_length_phase1_end: 100   # step 1..100
+  dynamic_max_response_length_phase1: 256
+  dynamic_max_response_length_phase2_end: 300   # step 101..300
+  dynamic_max_response_length_phase2: 512
+  dynamic_max_response_length_phase3: 1024      # step 301..end
+  # ARS-guided rollout length (after each val): probe teacher rescue at fixed prefixes.
+  # Student probe rollout uses val_max_response_length; only truncate to these prefixes.
+  enable_adaptive_rollout: true
+  adaptive_rollout_prefix_lengths: [128, 256, 1024]
+  adaptive_rollout_min_student_fails: 10
+  adaptive_rollout_trr_thresh: 0.75  # paper τ
+  adaptive_rollout_max_samples: 100
+  adaptive_rollout_files: null          # null -> reuse val_files
+  adaptive_rollout_monotonic: true      # never shrink rollout length mid-training
+  adaptive_rollout_teacher_max_tokens: 2048
+  adaptive_rollout_skip_first: true # skip ARS only when global_step==0 (not "first val event")
+  adaptive_rollout_skip_last: true  # skip ARS only when global_step==max_steps
+  filter_overlong_prompts: false
+
+  rollout_batch_size: 32
+  mini_rollout_batch_size: null
+  # Val + ARS probe share this; override via VAL_BATCH_SIZE in safety_opsd_train.sh
+  val_batch_size: 64
+
+  format_prompt: examples/safety_rl/format_prompt/safety_student.jinja
+  override_chat_template: null
+  shuffle: true
+  seed: 42
+
+algorithm:
+  adv_estimator: grpo          # unused in pure OPSD fit(), kept for schema compatibility
+  disable_kl: true
+  use_kl_loss: false
+
+opsd:
+  enable_grpo_opsd_simple: false   # MUST be false -> RayOPSDTrainer (not GRPO+RLSD)
+  use_gt_as_hint: true             # self-distill: hint from trajectory_key, skip Navigator
+  teacher_hint_template: examples/safety_rl/format_prompt/safety_teacher.jinja
+  enable_dynamic_verifier_hint: false
+  # teacher_dynamic_hint_template: examples/safety_rl/format_prompt/safety_teacher_dynamic.jinja
+  # verifier_feedback_max_length: 2048
+  freeze_teacher_model: true       # teacher = frozen ref copy
+  rlsd_teacher_sync_interval: 0    # >0: copy actor -> teacher every N steps (requires freeze_teacher_model)
+
+  alpha: 1.0                       # on-policy KL only (no off-policy branch)
+  lambda_nav: 0.0                  # no Navigator GRPO (forced when use_gt_as_hint)
+  outcome_ppo_coef: 0.0            # do NOT mix in reward-based PPO loss
+  student_rollout_n: 1
+
+  distillation_loss_type: topk_forward_kl  # paper default: KL(T || S); also topk_jsd | topk_reverse_kl | kl
+  opsd_kl_penalty: kl              # only 'kl' supported for sampled-token PG OPD
+  distillation_topk: 512
+  overlap_topk: 16
+  enable_topk_overlap_metrics: true
+  # Token filter (user-editable: examples/safety_rl/token_filter/filters.py)
+  # 1) mode 选出特殊集合 S；2) action 决定对 S: drop | sampled_kl
+  # mode: taxonomy_drop | taxonomy_keep | jsd_topn
+  token_filter: true
+  # If true: compute teacher top-k renorm distill only on keep/mask positions
+  keep_mask: true
+  token_filter_mode: taxonomy_keep
+  token_filter_action: drop
+  token_filter_top_n: 16
+  token_filter_log_updated: true
+  token_filter_log_max_tokens: 50000
+  token_filter_path: examples/safety_rl/token_filter/filters.py
+  token_filter_classifier: qwen_rubric
+  token_filter_keep_categories: [pivot, intent, risk_wo_same]  # paper K; Risk = risk_wo_same
+  token_filter_drop_categories: null
+  token_filter_student_source: top1  # top1 (=student argmax) | sampled (=rollout token)
+  self_distill_negative_off_policy: false
+
+worker:
+  actor:
+    global_batch_size: 32
+    micro_batch_size_per_device_for_update: 1
+    micro_batch_size_per_device_for_experience: 1
+    max_grad_norm: 1.0
+
+    padding_free: true
+    dynamic_batching: true
+
+    model:
+      model_path: Qwen/Qwen3-1.7B
+      enable_gradient_checkpointing: true
+      trust_remote_code: false
+
+    optim:
+      lr: 5.0e-6
+      weight_decay: 0.01
+      strategy: adamw
+      lr_warmup_ratio: 0.0
+
+    fsdp:
+      enable_full_shard: true
+      enable_cpu_offload: false
+      enable_rank0_init: true
+
+    offload:
+      offload_params: false
+      offload_optimizer: false
+
+  rollout:
+    n: 1                           # one student sample per prompt (pure distill)
+    temperature: 1.0
+    top_p: 1.0
+    gpu_memory_utilization: 0.6
+    tensor_parallel_size: 1
+    max_num_batched_tokens: 16384
+
+    val_override_config:
+      n: 1
+      temperature: 0.7
+      top_p: 0.8
+
+  ref:
+    fsdp:
+      enable_full_shard: true
+      enable_cpu_offload: false
+      enable_rank0_init: true
+    offload:
+      offload_params: false
+
+  reward:
+    reward_function: examples/safety_rl/reward/opsd_noop_reward.py:compute_score
+    skip_special_tokens: true
+    num_cpus: 4
+
+  val_reward:
+    # Default: Llama-Guard HTTP judge. Override via VAL_METHOD=reward for API/rule judge.
+    reward_function: examples/safety_rl/reward/llamaguard_reward.py:compute_score
+    reward_function_kwargs:
+      guard_backend: http
+      format_mode: off
+    skip_special_tokens: true
+    num_cpus: 4
+
+trainer:
+  total_epochs: 3
+  max_steps: 200
+
+  project_name: eopsa          # SwanLab / logger project (script overrides: opsd_safety_${DATA_SOURCE})
+  experiment_name: eopsa_demo  # placeholder; script sets trainer.experiment_name from ablation tags
+
+  logger: ["file", "swanlab"]
+
+  nnodes: 1
+  n_gpus_per_node: 2
+
+  val_freq: 50
+  val_before_train: true
+  val_only: false
+
+  save_freq: 20
+  save_limit: 10
+  save_checkpoint_path: null
+  find_last_checkpoint: true

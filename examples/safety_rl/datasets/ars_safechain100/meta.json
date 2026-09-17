@@ -1,0 +1,11 @@
+{
+  "n": 100,
+  "source_val": "examples/safety_rl/datasets/safety_ds_safechain_dsr100_h4400_b2200/val.jsonl",
+  "dataset": "safechain",
+  "filter": "data_type=='safety'",
+  "safechain_label_counts": {
+    "adversarial_harmful": 52,
+    "vanilla_harmful": 48
+  },
+  "note": "100 SafeChain harmful prompts for ARS probing"
+}

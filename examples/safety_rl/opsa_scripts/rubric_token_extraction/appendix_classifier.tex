@@ -1,0 +1,313 @@
+% =============================================================================
+% Appendix: Rubric-Guided Family-Specific Token Classifier
+% Requires (preamble):
+%   \usepackage{tcolorbox}\tcbuselibrary{breakable,skins,shadows}
+%   \usepackage{amsmath,amssymb}
+%   \usepackage{enumitem}
+%   \usepackage{booktabs}
+% Referenced from main text as Appendix~\ref{app:classifier}.
+% =============================================================================
+
+\section{Rubric-Guided Family-Specific Token Classifier}
+\label{app:classifier}
+
+This appendix details the offline construction of the family-specific token
+classifier used in Section~\ref{sec:token_classification}.
+Let $s\!=\!v_n^{S}$ and $t\!=\!v_n^{T}$ denote the student and teacher top-1
+tokens at a high-KL position $n$ (after lightweight normalization:
+lowercasing and stripping surrounding punctuation).
+The classifier maps each pair $(s,t)$ to one of six categories
+$\{\texttt{pivot},\texttt{intent},\texttt{risk},\texttt{function},
+\texttt{consistent},\texttt{other}\}$.
+At training time, risk is further split into same-surface
+(\texttt{risk\_lexicon}) and disagree (\texttt{risk\_wo\_same}) so that only the
+latter enters the default keep set
+$\{\texttt{pivot},\texttt{intent},\texttt{risk\_wo\_same}\}$.
+
+\paragraph{Notation.}
+We write $\mathcal{L}_{\mathrm{pivot}}^{S/T}$,
+$\mathcal{L}_{\mathrm{intent}}^{S/T}$,
+$\mathcal{L}_{\mathrm{risk}}$, and
+$\mathcal{L}_{\mathrm{func}}$ for the family-specific lexicons, and
+$\mathcal{P}_{\mathrm{intent}}\subseteq
+\mathcal{L}_{\mathrm{intent}}^{S}\!\times\!\mathcal{L}_{\mathrm{intent}}^{T}$
+for the extracted intent pairs.
+These sets are \emph{not} hand-written: they are produced by the pipeline in
+Appendix~\ref{app:classifier:pipeline}.
+
+% ---------------------------------------------------------------------------
+\subsection{Universal Semantic Rubrics}
+\label{app:classifier:rubrics}
+
+We first fix a model-agnostic semantic rubric that defines what each category
+\emph{means}.
+An LLM-as-a-judge is prompted with this rubric (together with the user query and
+student response) when labeling disagreeing $(s,t)$ pairs.
+Surface-equal pairs ($s\!=\!t$) are assigned to \texttt{consistent} by a
+deterministic rule and are never sent to the judge.
+Pairs that match none of the four extractable categories are treated as
+\texttt{other} (no lexicon is accumulated for \texttt{other}).
+When categories conflict, the priority is
+\texttt{pivot}$>$\texttt{risk}$>$\texttt{intent}$>$\texttt{function}.
+
+% Card style: full-width gray title bar + soft drop shadow (cf. pivot-rules figure).
+\tcbset{
+  rubricbox/.style={
+    enhanced,
+    breakable,
+    colback=white,
+    colframe=black!55,
+    boxrule=0.6pt,
+    arc=2.5pt,
+    left=7pt,
+    right=7pt,
+    top=5pt,
+    bottom=6pt,
+    toptitle=4pt,
+    bottomtitle=4pt,
+    lefttitle=7pt,
+    righttitle=7pt,
+    colbacktitle=black!10,
+    coltitle=black,
+    fonttitle=\bfseries\small,
+    shadow={1.2mm}{-1.2mm}{0mm}{black!18},
+  },
+}
+
+\begin{tcolorbox}[rubricbox,
+  title={Category 1: Pivot ($\mathcal{R}_{\mathrm{pivot}}$)}]
+Identifies structural turns from compliance / task planning toward refusal
+or a safety pivot.\\[3pt]
+\textbf{Teacher pivot lexicon.}
+Matches if $s\neq t$ and $t\in\mathcal{L}_{\mathrm{pivot}}^{T}$, where typical
+cues include
+\texttt{but}, \texttt{however}, \texttt{wait}, \texttt{which}, \texttt{first},
+\texttt{also}, \texttt{maybe}, \ldots\\[2pt]
+\textbf{Student-side cues.}
+$\mathcal{L}_{\mathrm{pivot}}^{S}$ collects compliance openers during extraction
+(e.g., \texttt{let}, \texttt{first}, \texttt{so}, \texttt{the});
+runtime matching uses the teacher cue $t\in\mathcal{L}_{\mathrm{pivot}}^{T}$
+with $s\neq t$.\\[2pt]
+\emph{Example:} \texttt{First}$\,\rightarrow\,$\texttt{But}.
+\end{tcolorbox}
+
+\vspace{0.35em}
+\begin{tcolorbox}[rubricbox,
+  title={Category 2: Intent ($\mathcal{R}_{\mathrm{intent}}$)}]
+Shift from \emph{executing the task} (student) to \emph{safety evaluation}
+(teacher): checking user intent, recognizing risk, or considering refusal.\\[3pt]
+Matches if $s\neq t$ and either
+$(s,t)\in\mathcal{P}_{\mathrm{intent}}$, or
+$s\in\mathcal{L}_{\mathrm{intent}}^{S}$ \textbf{and}
+$t\in\mathcal{L}_{\mathrm{intent}}^{T}$.\\[2pt]
+Positive examples:
+\texttt{understand}$\,\rightarrow\,$\texttt{recognize},
+\texttt{start}$\,\rightarrow\,$\texttt{consider},
+\texttt{use}$\,\rightarrow\,$\texttt{avoid},
+\texttt{key}$\,\rightarrow\,$\texttt{core}.\\[2pt]
+\emph{Note:} Pronoun / person-opener swaps alone
+(e.g., \texttt{The}$\,\rightarrow\,$\texttt{I},
+\texttt{Maybe}$\,\rightarrow\,$\texttt{I}) are \emph{not} intent.
+\end{tcolorbox}
+
+\vspace{0.35em}
+\begin{tcolorbox}[rubricbox,
+  title={Category 3: Risk Lexicon ($\mathcal{R}_{\mathrm{risk}}$)}]
+Explicit safety and refusal-oriented vocabulary.\\[3pt]
+Matches if $s\neq t$ and
+($s\in\mathcal{L}_{\mathrm{risk}}$ or $t\in\mathcal{L}_{\mathrm{risk}}$),
+where (illustrative; family-specific):\\[2pt]
+% IMPORTANT: do NOT put the whole token list inside one $...$ (math does not wrap).
+{\raggedright\sloppy
+$\mathcal{L}_{\mathrm{risk}}=\{$%
+\texttt{harmful}, \texttt{dangerous}, \texttt{illegal}, \texttt{unethical},
+\texttt{crime}, \texttt{harm}, \texttt{refuse}, \texttt{reject},
+\texttt{avoid}, \texttt{serious}, \texttt{safety}, \texttt{safe},
+\texttt{guidelines}, \texttt{sensitive}, \texttt{ethical}, \texttt{risk},
+\texttt{risks}, \ldots$\}$\par
+}\\[2pt]
+\emph{Note:} Same-surface risk ($s\!=\!t$) is recorded as
+\texttt{risk\_lexicon} and excluded from the default keep set.
+Only disagreeing risk (\texttt{risk\_wo\_same}) is optimized.
+\end{tcolorbox}
+
+\vspace{0.35em}
+\begin{tcolorbox}[rubricbox,
+  title={Category 4: Function ($\mathcal{R}_{\mathrm{function}}$)}]
+Basic grammatical glue with no safety / intent / pivot role: punctuation,
+prepositions, articles, conjunctions, and auxiliaries.\\[3pt]
+Matches if $s\neq t$ and both
+$s,t\in\mathcal{L}_{\mathrm{func}}$, or if either side is pure punctuation.\\[2pt]
+Typical members:
+\texttt{the}, \texttt{a}, \texttt{to}, \texttt{of}, \texttt{and}, \texttt{is},
+\texttt{,}, \texttt{.}, \ldots\\[2pt]
+\emph{Note:} Discourse pivots (\texttt{but}/\texttt{however}/\texttt{wait})
+and risk words must not enter $\mathcal{L}_{\mathrm{func}}$.
+\end{tcolorbox}
+
+\vspace{0.35em}
+\begin{tcolorbox}[rubricbox,
+  title={Category 5: Consistent ($\mathcal{R}_{\mathrm{consistent}}$)}]
+Positions where the student and teacher share the same top-1 surface form,
+yet differing probabilities yield a high KL.\\[3pt]
+Matches if $s=t$ (after normalization), when not claimed earlier as
+same-surface risk for the training split.\\[2pt]
+\emph{Note:} Assigned by a deterministic rule; never labeled by the LLM judge.
+\end{tcolorbox}
+
+\vspace{0.35em}
+\begin{tcolorbox}[rubricbox,
+  title={Category 6: Other ($\mathcal{R}_{\mathrm{other}}$)}]
+Query- or domain-specific tokens that do not drive the safety decision
+(task entities, content nouns, etc.).\\[3pt]
+Matches as the residual class after Categories~1--5.\\[2pt]
+\emph{Note:} No lexicon is maintained for \texttt{other}; it is the implicit
+remainder of the runtime decision procedure.
+\end{tcolorbox}
+
+% ---------------------------------------------------------------------------
+\subsection{Offline Extraction Pipeline}
+\label{app:classifier:pipeline}
+
+Because different model families lexicalize the same safety intents differently,
+we instantiate $\mathcal{L}_{(\cdot)}$ and $\mathcal{P}_{\mathrm{intent}}$
+\emph{offline} for the target student, using a hold-out harmful set that does
+not overlap the training data.
+The pipeline has four stages.
+
+\paragraph{Stage~1: Student rollout and top-$K$ KL mining.}
+For each hold-out query $x$, we roll out the (untrained) student under its
+standard chat template up to a fixed response budget (we use $256$ tokens for
+Qwen3-1.7B).
+On the same response token ids, we evaluate both the student and a
+privileged-information teacher, compute teacher-top-$k$ renormalized forward KL
+at each position ($k\!=\!512$), and retain the top-$16$ positions per sample.
+Each retained position yields a pair $(s,t)=(v_n^{S},v_n^{T})$.
+
+\paragraph{Stage~2: Per-sample LLM judgment (one call per query).}
+For every sample we issue a \emph{single} LLM call
+(\texttt{gpt-4o-mini} in our experiments) whose prompt contains:
+(i)~the universal rubrics in Appendix~\ref{app:classifier:rubrics};
+(ii)~the user query and truncated student response;
+(iii)~the up-to-$16$ disagreeing pairs (surface-equal pairs are pre-labeled
+\texttt{consistent} and omitted from the prompt).
+The judge returns, for each rank, a category in
+$\{\texttt{pivot},\texttt{intent},\texttt{risk},\texttt{function},\texttt{null}\}$
+and, for pivot / risk / function, the explicit token(s) from that pair that
+belong to the category (so content words on the other side are not absorbed
+into $\mathcal{L}_{\mathrm{risk}}$ or $\mathcal{L}_{\mathrm{func}}$).
+Category $\texttt{null}$ becomes runtime \texttt{other} and contributes
+nothing to the lexicons.
+
+\paragraph{Stage~3: Frequency aggregation.}
+Across all judged pairs we accumulate counts and keep tokens / pairs that
+appear at least $\tau_{\mathrm{tok}}$ / $\tau_{\mathrm{pair}}$ times
+(default $\tau\!=\!2$):
+\begin{itemize}[leftmargin=1.6em, topsep=3pt, itemsep=2pt, parsep=0pt]
+  \item[\textbullet]
+    \textbf{pivot:}
+    $s\mapsto\mathcal{L}_{\mathrm{pivot}}^{S}$,\
+    $t\mapsto\mathcal{L}_{\mathrm{pivot}}^{T}$
+  \item[\textbullet]
+    \textbf{intent:}
+    $s\mapsto\mathcal{L}_{\mathrm{intent}}^{S}$,\
+    $t\mapsto\mathcal{L}_{\mathrm{intent}}^{T}$,\
+    $(s,t)\mapsto\mathcal{P}_{\mathrm{intent}}$
+  \item[\textbullet]
+    \textbf{risk:}
+    judge-listed tokens $\mapsto\mathcal{L}_{\mathrm{risk}}$
+  \item[\textbullet]
+    \textbf{function:}
+    judge-listed tokens $\mapsto\mathcal{L}_{\mathrm{func}}$
+\end{itemize}
+
+\paragraph{Stage~4: One-shot lexicon audit (secondary LLM filter).}
+Aggregation alone can admit pronouns, vague openers, or query-tied content
+words.
+We therefore make \emph{one} additional LLM call over the \emph{entire}
+candidate lexicons and $\mathcal{P}_{\mathrm{intent}}$, providing the same
+problem background (privileged-teacher distillation; sets must be
+query-universal) and category reminders.
+The judge returns only items to \textbf{drop}; uncertain items are kept.
+We then remove dropped tokens, drop any intent pair whose either side left the
+intent lexicons, and emit the final family-specific rule file used at training
+time.
+
+\paragraph{Runtime decision order.}
+Given the audited lexicons, training-time classification follows a fixed
+priority (illustrated for the Qwen3 rubric classifier):
+\begin{enumerate}[leftmargin=*, topsep=2pt, itemsep=1pt]
+  \item \textbf{Pivot:} $t\in\mathcal{L}_{\mathrm{pivot}}^{T}$ and $s\neq t$.
+  \item \textbf{Risk:} $s\in\mathcal{L}_{\mathrm{risk}}$ or
+        $t\in\mathcal{L}_{\mathrm{risk}}$; then
+        $\texttt{risk\_lexicon}$ if $s\!=\!t$, else $\texttt{risk\_wo\_same}$.
+  \item \textbf{Consistent:} $s\!=\!t$.
+  \item \textbf{Intent:} $(s,t)\in\mathcal{P}_{\mathrm{intent}}$, or
+        both $s\in\mathcal{L}_{\mathrm{intent}}^{S}$ and
+        $t\in\mathcal{L}_{\mathrm{intent}}^{T}$.
+  \item \textbf{Function:} both sides in $\mathcal{L}_{\mathrm{func}}$, or
+        either side is pure punctuation.
+  \item \textbf{Other:} residual.
+\end{enumerate}
+Default training keep:
+$\{\texttt{pivot},\texttt{intent},\texttt{risk\_wo\_same}\}$.
+
+% ---------------------------------------------------------------------------
+\subsection{Example Instantiation: Qwen3-1.7B}
+\label{app:classifier:qwen}
+
+Table~\ref{tab:app:qwen-lexicons} reports the audited lexicons extracted for
+Qwen3-1.7B on $200$ hold-out harmful SafeChain prompts (top-$16$ KL positions;
+judge + audit with \texttt{gpt-4o-mini}).
+Intent pairs $\mathcal{P}_{\mathrm{intent}}$ are omitted for space; examples
+include
+$(\texttt{understand},\texttt{recognize})$,
+$(\texttt{start},\texttt{consider})$,
+$(\texttt{use},\texttt{avoid})$,
+$(\texttt{key},\texttt{core})$,
+$(\texttt{make},\texttt{check})$.
+The same procedure is repeated unchanged for other families
+(e.g., DeepSeek-R1-distilled students), yielding different lexicalizations of
+the same rubrics.
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Family-specific lexicons for Qwen3-1.7B after aggregation and
+  one-shot audit (illustrative; full $\mathcal{L}_{\mathrm{func}}$ truncated).}
+  \label{tab:app:qwen-lexicons}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.18\linewidth}
+                  >{\raggedright\arraybackslash}p{0.74\linewidth}@{}}
+    \toprule
+    Set & Tokens \\
+    \midrule
+    $\mathcal{L}_{\mathrm{pivot}}^{T}$ &
+      \texttt{also}, \texttt{but}, \texttt{first}, \texttt{however},
+      \texttt{wait}, \texttt{which} \\
+    $\mathcal{L}_{\mathrm{pivot}}^{S}$ &
+      \texttt{also}, \texttt{but}, \texttt{first}, \texttt{for},
+      \texttt{however}, \texttt{let}, \texttt{maybe}, \texttt{or},
+      \texttt{so}, \texttt{wait} \\
+    $\mathcal{L}_{\mathrm{intent}}^{T}$ &
+      \texttt{acknowledge}, \texttt{asking}, \texttt{avoid}, \texttt{check},
+      \texttt{consider}, \texttt{core}, \texttt{ensure}, \texttt{intent},
+      \texttt{recognize}, \texttt{remember}, \texttt{request},
+      \texttt{safety}, \texttt{user}, \ldots \\
+    $\mathcal{L}_{\mathrm{intent}}^{S}$ &
+      \texttt{consider}, \texttt{context}, \texttt{key}, \texttt{make},
+      \texttt{recall}, \texttt{request}, \texttt{requirements},
+      \texttt{start}, \texttt{think}, \texttt{understand}, \texttt{use},
+      \ldots \\
+    $\mathcal{L}_{\mathrm{risk}}$ &
+      \texttt{avoid}, \texttt{cannot}, \texttt{compliant},
+      \texttt{consequences}, \texttt{ethical}, \texttt{harm},
+      \texttt{harmful}, \texttt{illegal}, \texttt{refuse}, \texttt{risk},
+      \texttt{risks}, \texttt{safe}, \texttt{safer}, \texttt{safety},
+      \texttt{sensitive}, \ldots \\
+    $\mathcal{L}_{\mathrm{func}}$ &
+      punctuation; \texttt{an}, \texttt{and}, \texttt{of}, \texttt{to},
+      \texttt{with}, \ldots
+      (content / pivot / risk words removed by audit) \\
+    \bottomrule
+  \end{tabular}
+\end{table}

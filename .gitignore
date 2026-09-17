@@ -1,0 +1,25 @@
+__pycache__/
+*.pyc
+*.pyo
+*.log
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.DS_Store
+.env
+
+# Weights / logs / experiment dumps
+checkpoints/
+wandb/
+swanlog/
+swanlab/
+outputs/
+logs/
+*.pt
+*.bin
+*.safetensors
+
+# Local datasets / HF cache
+examples/safety_rl/datasets/SafeChain_raw/data/
+examples/safety_rl/logs/
+examples/safety_rl/opsa_scripts/rubric_token_extraction/outputs/

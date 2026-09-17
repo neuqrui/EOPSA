@@ -1,0 +1,8 @@
+{#- Teacher prompt with static privileged guidance (safe_reference). -#}
+{{ question | default(problem) | trim }}
+
+[Hints for answering]
+Use the following guidance when formulating your answer.
+{{ hint | trim }}
+
+Now begin your answer. Do not mention, quote, or reveal the hints above in your response.
