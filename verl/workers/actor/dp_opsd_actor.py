@@ -1644,8 +1644,8 @@ class DataParallelOPSDActor(DataParallelPPOActor):
         token_filter_extra = {
             "keep_categories": opsd_config.get("token_filter_keep_categories"),
             "drop_categories": opsd_config.get("token_filter_drop_categories"),
-            "classifier": opsd_config.get("token_filter_classifier", "qwen_rubric"),
-            "token_filter_classifier": opsd_config.get("token_filter_classifier", "qwen_rubric"),
+            "classifier": opsd_config.get("token_filter_classifier", "qwen_eopsa"),
+            "token_filter_classifier": opsd_config.get("token_filter_classifier", "qwen_eopsa"),
             "student_token_source": opsd_config.get("token_filter_student_source", "top1"),
             "token_filter_student_source": opsd_config.get("token_filter_student_source", "top1"),
         }

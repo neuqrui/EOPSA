@@ -91,7 +91,7 @@ opsd:
   token_filter_log_updated: true
   token_filter_log_max_tokens: 50000
   token_filter_path: examples/safety_rl/token_filter/filters.py
-  token_filter_classifier: qwen_rubric
+  token_filter_classifier: qwen_eopsa  # qwen_eopsa (default) | qwen_rubric | qwen-rubric
   token_filter_keep_categories: [pivot, intent, risk_wo_same]  # paper K; Risk = risk_wo_same
   token_filter_drop_categories: null
   token_filter_student_source: top1  # top1 (=student argmax) | sampled (=rollout token)

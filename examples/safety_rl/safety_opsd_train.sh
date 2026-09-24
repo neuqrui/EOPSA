@@ -528,7 +528,8 @@ TOKEN_FILTER_TOP_N=${TOKEN_FILTER_TOP_N:-${SAME_TOKEN_FILTER_TOP_N:-16}}
 TOKEN_FILTER_LOG_UPDATED=${TOKEN_FILTER_LOG_UPDATED:-${SAME_TOKEN_FILTER_LOG_UPDATED:-true}}
 TOKEN_FILTER_LOG_MAX_TOKENS=${TOKEN_FILTER_LOG_MAX_TOKENS:-${SAME_TOKEN_FILTER_LOG_MAX_TOKENS:-50000}}
 TOKEN_FILTER_PATH=${TOKEN_FILTER_PATH:-"examples/safety_rl/token_filter/filters.py"}
-TOKEN_FILTER_CLASSIFIER=${TOKEN_FILTER_CLASSIFIER:-qwen_rubric}  # official: qwen_rubric only
+# qwen_eopsa (default) | qwen_rubric (alias: qwen-rubric)
+TOKEN_FILTER_CLASSIFIER=${TOKEN_FILTER_CLASSIFIER:-qwen_eopsa}
 # If true: teacher top-k renorm KL/JSD only on keep positions (same loss, less vocab top-k compute)
 KEEP_MASK=${KEEP_MASK:-true}
 TOKEN_FILTER_KEEP_CATEGORIES=${TOKEN_FILTER_KEEP_CATEGORIES:-pivot,intent,risk_wo_same}

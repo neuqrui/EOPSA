@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Rubric-extracted Qwen taxonomy for EOPSA Selective Distillation.
+"""Rubric-extracted Qwen taxonomy (``TOKEN_FILTER_CLASSIFIER=qwen_rubric``).
 
-Official classifier (paper §Selective Distillation). Categories map to:
+Alias: ``qwen-rubric``. Categories map to:
   Pivot / Intent / Risk(=risk_wo_same) / Function / Consistent(=same) / Other.
 
 Default keep set K: ``pivot``, ``intent``, ``risk_wo_same``.

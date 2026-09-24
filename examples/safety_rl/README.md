@@ -9,7 +9,7 @@
    - 取最长满足 `TRR_L ≥ τ` 的 `L`（默认 `τ=0.75`）
    - 需要 `VAL_FREQ=50`（与论文 step 50 解锁更长 horizon 一致）
 2. **Selective Distillation** — `TOKEN_FILTER=true`
-   - 分类器：`qwen_rubric`
+   - 分类器：默认 `qwen_eopsa`，也可设 `qwen_rubric`（别名 `qwen-rubric`）
    - 保留集 `K`：`pivot,intent,risk_wo_same`（论文 Risk = `risk_wo_same`）
 3. **蒸馏目标** — `DISTILLATION_LOSS_TYPE=topk_forward_kl`
 

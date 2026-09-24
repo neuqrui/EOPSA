@@ -195,8 +195,8 @@ class OPSDConfig:
     """Override keep-set for ``taxonomy_keep``."""
     token_filter_drop_categories: Optional[list[str]] = None
     """Override drop-set for ``taxonomy_drop`` (default includes ``same``)."""
-    token_filter_classifier: str = "qwen_rubric"
-    """Official taxonomy classifier. Only ``qwen_rubric`` is supported in the release.
+    token_filter_classifier: str = "qwen_eopsa"
+    """Taxonomy classifier. ``qwen_eopsa`` (default) or ``qwen_rubric`` (alias ``qwen-rubric``).
 
     Safety-critical keep set K = {pivot, intent, risk_wo_same} (paper Risk ↔ risk_wo_same).
     """

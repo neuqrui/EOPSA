@@ -5,8 +5,10 @@
 Paper mapping
 -------------
 Safety-critical set ``K = {Pivot, Intent, Risk}`` is realized as taxonomy labels
-``pivot``, ``intent``, ``risk_wo_same`` via the rubric classifier
-(``filters_qwen_rubric.py``).
+``pivot``, ``intent``, ``risk_wo_same``. Two classifiers are supported:
+
+- ``qwen_eopsa`` (default): ``filters_qwen_eopsa.py``
+- ``qwen_rubric`` / ``qwen-rubric``: ``filters_qwen_rubric.py``
 
 Only ``taxonomy_keep`` + action ``drop`` is supported in the official release:
 main distillation trains tokens in ``K``; all other tokens are dropped.
@@ -37,20 +39,25 @@ def _load_sibling_module(filename: str):
     return module
 
 
+_QWEN_EOPSA = _load_sibling_module("filters_qwen_eopsa.py")
 _QWEN_RUBRIC = _load_sibling_module("filters_qwen_rubric.py")
 
-# Official classifier: rubric-extracted Qwen lexicons only.
+# Official classifiers. Default is qwen_eopsa.
 _CLASSIFIERS = {
+    "qwen_eopsa": _QWEN_EOPSA.classify_token_qwen_eopsa,
     "qwen_rubric": _QWEN_RUBRIC.classify_token_qwen_rubric,
 }
 
 # Paper K = {Pivot, Intent, Risk} ↔ risk_wo_same (see module docstring).
 TAXONOMY_KEEP_CATEGORIES = {"pivot", "intent", "risk_wo_same"}
+TAXONOMY_KEEP_CATEGORIES_QWEN_EOPSA = _QWEN_EOPSA.TAXONOMY_KEEP_CATEGORIES
+TAXONOMY_DROP_CATEGORIES_QWEN_EOPSA = _QWEN_EOPSA.TAXONOMY_DROP_CATEGORIES
 TAXONOMY_KEEP_CATEGORIES_QWEN_RUBRIC = _QWEN_RUBRIC.TAXONOMY_KEEP_CATEGORIES
 TAXONOMY_DROP_CATEGORIES_QWEN_RUBRIC = _QWEN_RUBRIC.TAXONOMY_DROP_CATEGORIES
 
+classify_token_qwen_eopsa = _QWEN_EOPSA.classify_token_qwen_eopsa
 classify_token_qwen_rubric = _QWEN_RUBRIC.classify_token_qwen_rubric
-classify_token_qwen = _QWEN_RUBRIC.classify_token_qwen_rubric
+classify_token_qwen = classify_token_qwen_eopsa
 
 
 @dataclass
@@ -194,26 +201,16 @@ def _expand_match_cats(match_cats: set[str]) -> set[str]:
 def _resolve_classifier(extra: Optional[dict[str, Any]] = None):
     extra = extra or {}
     classifier = str(
-        extra.get("classifier") or extra.get("token_filter_classifier") or "qwen_rubric"
-    ).strip().lower()
-    # Accept legacy aliases by routing everything to the official rubric classifier.
-    if classifier in {
-        "qwen_rubric",
-        "rubric",
-        "qwen",
-        "legacy",
-        "eopsa",
-        "qwen_eopsa",
-        "qwen_ori",
-        "original",
-        "ds",
-        "r1",
-    }:
-        return _QWEN_RUBRIC.classify_token_qwen_rubric
-    raise ValueError(
-        f"Unknown token_filter_classifier={classifier!r}. "
-        "Official release only supports 'qwen_rubric'."
-    )
+        extra.get("classifier") or extra.get("token_filter_classifier") or "qwen_eopsa"
+    ).strip().lower().replace("-", "_")
+    fn = _CLASSIFIERS.get(classifier)
+    if fn is None:
+        raise ValueError(
+            f"Unknown token_filter_classifier={classifier!r}. "
+            "Official release supports 'qwen_eopsa' (default) and 'qwen_rubric' "
+            "(alias: qwen-rubric)."
+        )
+    return fn
 
 
 def classify_token(
