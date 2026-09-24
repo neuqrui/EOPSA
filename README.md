@@ -10,25 +10,31 @@
 </p>
 </div>
 
-<p align="center">
-  <img src="assets/method.svg" width="100%" alt="EOPSA method overview: Adaptive Rollout Scheduling and Selective Distillation"/>
-</p>
-<p align="center"><em>EOPSA overview: Adaptive Rollout Scheduling truncates the horizon to the reliable TRR regime, and Selective Distillation updates only safety-critical tokens in <code>K = {Pivot, Intent, Risk}</code>.</em></p>
+## 💡 Overview
 
 On-policy self-distillation (OPSD) can provide dense, token-level safety supervision, but full-sequence distillation is both expensive and noisy: teacher rescue collapses on long unaligned prefixes, and privileged prompts inject stylistic shifts that dilute genuine safety gradients.
 
 **EOPSA** concentrates the rollout and gradient budget on tokens that are *reliably supervised* and *safety-critical*. It combines Adaptive Rollout Scheduling (ARS) with Selective Distillation, cutting rollout compute by about 50% and backpropagating through about 2% of tokens, while improving safety and retaining reasoning.
+
+## 🧭 Method
+
+<p align="center">
+  <img src="assets/method.svg" width="100%" alt="EOPSA method overview: Adaptive Rollout Scheduling and Selective Distillation"/>
+</p>
+<p align="center"><em>EOPSA overview: Adaptive Rollout Scheduling truncates the horizon to the reliable TRR regime, and Selective Distillation updates only safety-critical tokens in <code>K = {Pivot, Intent, Risk}</code>.</em></p>
 
 <p align="center">
   <img src="assets/training_dynamics.png" width="100%" alt="EOPSA training dynamics: token filtering and TRR-guided rollout horizons"/>
 </p>
 <p align="center"><em>Online training: Selective Distillation keeps a sparse safety-critical subset, while ARS expands the horizon only when Teacher Rescue Rate stays above τ.</em></p>
 
-## Highlights
+## ✨ Highlights
 
 - **Adaptive Rollout Scheduling.** Student rollouts are bounded by Teacher Rescue Rate (TRR) over candidate horizons `S = {128, 256, 1024}` with threshold `τ = 0.75`, so late-stage tokens are not trained under collapsed teacher supervision.
 - **Selective Distillation.** A rubric classifier keeps only `K = {Pivot, Intent, Risk}` and drops safety-neutral stylistic tokens (`Function`, `Consistent`, `Other`).
 - **Non-destructive alignment.** Across Qwen3 (1.7B–32B) and DeepSeek-R1-Distill-Qwen-7B, EOPSA improves safety over full-token OPSD while largely preserving MATH / coding / GPQA performance.
+
+## 📊 Results
 
 <table>
 <tr>
@@ -50,7 +56,7 @@ On-policy self-distillation (OPSD) can provide dense, token-level safety supervi
 </p>
 <p align="center"><em>Main results: EOPSA improves safety over OPSA while using about 1% of the optimized tokens per sample, with reasoning largely preserved.</em></p>
 
-## Method
+## ⚙️ Paper Defaults
 
 EOPSA is implemented on a modified [veRL](https://github.com/volcengine/verl) trainer. The paper recipe is the default in `examples/safety_rl/`.
 
@@ -63,7 +69,7 @@ EOPSA is implemented on a modified [veRL](https://github.com/volcengine/verl) tr
 | Safety-critical set `K` | `pivot,intent,risk_wo_same` |
 | Forward KL `KL(T \|\| S)` | `DISTILLATION_LOSS_TYPE=topk_forward_kl` |
 
-## Getting Started
+## 🚀 Quick Start
 
 Python 3.10+ and NVIDIA GPUs (paper runs used H200 with FSDP + vLLM).
 
@@ -86,6 +92,10 @@ bash safety_opsd_train.sh
 
 The launcher defaults match the paper: ARS on, Selective Distillation on, 200 steps, batch size 32, learning rate `5e-6`, forward KL. More options are documented in [`examples/safety_rl/README.md`](examples/safety_rl/README.md).
 
+Do not commit secrets. Copy [`.env.example`](.env.example) and export keys only if you use an API judge or SwanLab.
+
+## 📁 Layout
+
 | Directory | Area |
 |-----------|------|
 | `examples/safety_rl/` | Training entry, data, prompts, rewards |
@@ -93,15 +103,15 @@ The launcher defaults match the paper: ARS on, Selective Distillation on, 200 st
 | `examples/safety_rl/opsa_scripts/` | Offline lexicon extraction (appendix) |
 | `verl/` | Training backend |
 
+## 🧪 Evaluation
+
 Safety / over-refusal evaluation covers WildJailbreak, StrongReject, HarmBench, WildChat, XSTest, and OKTest. Analysis scripts read datasets from `EVAL_LLM_SAFETY_DIR` if you keep a local eval suite.
 
-Do not commit secrets. Copy [`.env.example`](.env.example) and export keys only if you use an API judge or SwanLab.
-
-## License
+## 📜 License
 
 This repository is released under the Apache License 2.0. It includes a modified copy of [veRL](https://github.com/volcengine/verl). See [`LICENSE`](LICENSE) for additional terms.
 
-## Citation
+## 📚 Citation
 
 <a id="citation"></a>
 
