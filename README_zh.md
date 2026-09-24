@@ -1,5 +1,9 @@
-<h1 align="center">EOPSA</h1>
-<p align="center"><b>Efficient On-Policy Self-Distilled Safety Alignment</b></p>
+<div align="center">
+<img src="assets/eopsa-mascot.png" height="108" align="absmiddle" alt="EOPSA 吉祥物：把大量 token 蒸馏为三个安全关键 token，并修剪 rollout 序列">
+<img src="assets/eopsa-logo.svg" height="78" align="absmiddle" alt="EOPSA">
+
+**Efficient On-Policy Self-Distilled Safety Alignment**
+</div>
 
 <p align="center">
   <a href="README.md#citation">📄 Paper</a> &nbsp;·&nbsp;

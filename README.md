@@ -1,5 +1,6 @@
 <div align="center">
-<img src="assets/eopsa-logo.svg" width="480" alt="EOPSA">
+<img src="assets/eopsa-mascot.png" height="108" align="absmiddle" alt="EOPSA mascot filtering many tokens into three safety-critical tokens and trimming the rollout sequence">
+<img src="assets/eopsa-logo.svg" height="78" align="absmiddle" alt="EOPSA">
 
 **Efficient On-Policy Self-Distilled Safety Alignment**
 
