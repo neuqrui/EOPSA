@@ -7,7 +7,8 @@
 
 <p align="center">
   <a href="README.md#citation">📄 Paper</a> &nbsp;·&nbsp;
-  <a href=".">💻 Code</a>
+  <a href=".">💻 Code</a> &nbsp;·&nbsp;
+  <a href="https://huggingface.co/collections/neuqrui/eopsa">🤗 Models</a>
 </p>
 
 完整说明见 [English README](README.md)。
