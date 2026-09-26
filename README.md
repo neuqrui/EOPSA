@@ -141,15 +141,16 @@ GUARD_MODEL_PATH=meta-llama/Llama-Guard-3-8B \
 bash safety_opsd_train.sh
 ```
 
-The launcher defaults match the paper: ARS on, Selective Distillation on, 200 steps, batch size 32, learning rate `5e-6`, forward KL. More options are documented in [`examples/safety_rl/README.md`](examples/safety_rl/README.md).
+The launcher defaults match the paper: ARS on, Selective Distillation on, 200 steps, batch size 32, learning rate `5e-6`, forward KL. Training data is the shipped SafeChain subset under `examples/safety_rl/datasets/safechain-subset/` (4400 harmful + 2200 benign); it is used as-is and is not regenerated unless you set `REBUILD_DATA=1`. More options are documented in [`examples/safety_rl/README.md`](examples/safety_rl/README.md).
 
-Do not commit secrets. Copy [`.env.example`](.env.example) and export keys only if you use an API judge or SwanLab.
+Install FlashAttention 2 before training (`pip install flash-attn`, matching your torch/CUDA). Llama-Guard-3-8B is gated: accept the model license and set `HF_TOKEN`, or pass a local `GUARD_MODEL_PATH`. Do not commit secrets. Copy [`.env.example`](.env.example) and export keys for HF / API judge / SwanLab as needed.
 
 ## 📁 Layout
 
 | Directory | Area |
 |-----------|------|
 | `examples/safety_rl/` | Training entry, data, prompts, rewards |
+| `examples/safety_rl/datasets/safechain-subset/` | Paper SafeChain subset (veRL jsonl) |
 | `examples/safety_rl/token_filter/` | Rubric classifier for Selective Distillation |
 | `examples/safety_rl/opsa_scripts/` | Offline lexicon extraction (appendix) |
 | `verl/` | Training backend |

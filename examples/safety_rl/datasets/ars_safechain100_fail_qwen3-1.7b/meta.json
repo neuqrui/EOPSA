@@ -6,7 +6,7 @@
   "seed": 42,
   "model": "Qwen/Qwen3-1.7B",
   "guard": "meta-llama/Llama-Guard-3-8B",
-  "source": "examples/safety_rl/datasets/safety_ds_safechain_dsr100_h4400_b2200/train.jsonl",
+  "source": "examples/safety_rl/datasets/safechain-subset/train.jsonl",
   "filter": "data_type==safety & safechain_label in {adversarial_harmful,vanilla_harmful} & LlamaGuard unsafe",
   "label_counts": {
     "adversarial_harmful": 62,

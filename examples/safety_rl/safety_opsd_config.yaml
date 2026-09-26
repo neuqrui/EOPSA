@@ -10,8 +10,8 @@
 #                                same chat+parse rule as eval_llm_safety run_eval_guard_vllm)
 
 data:
-  train_files: examples/safety_rl/datasets/safety_ds_safechain/train.jsonl
-  val_files: examples/safety_rl/datasets/safety_ds_safechain/val.jsonl
+  train_files: examples/safety_rl/datasets/safechain-subset/train.jsonl
+  val_files: examples/safety_rl/datasets/safechain-subset/val_wjwc_mix.jsonl
 
   prompt_key: problem
   answer_key: answer

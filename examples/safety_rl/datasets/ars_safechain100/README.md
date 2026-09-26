@@ -2,7 +2,7 @@
 
 Exact **100** SafeChain harmful rows from:
 
-`datasets/safety_ds_safechain_dsr100_h4400_b2200/val.jsonl`
+`datasets/safechain-subset/val.jsonl`
 (`data_type == safety`: 52 adversarial_harmful + 48 vanilla_harmful)
 
 ## Files

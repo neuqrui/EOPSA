@@ -33,7 +33,7 @@ from prepare_safety_data import (  # noqa: E402
 DEFAULT_VAL = (
     SAFETY_RL_DIR
     / "datasets"
-    / "safety_ds_safechain_dsr100_h4400_b2200"
+    / "safechain-subset"
     / "val.jsonl"
 )
 DEFAULT_TRAIN = DEFAULT_VAL.with_name("train.jsonl")

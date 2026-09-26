@@ -62,7 +62,7 @@ from rubric_definitions import (  # noqa: E402
 
 DEFAULT_MODEL = __import__("os").environ.get("MODEL_PATH", "Qwen/Qwen3-1.7B")
 DEFAULT_DATA = (
-    SAFETY_RL_DIR / "datasets" / "safety_ds_safechain_dsr100_h4400_b2200" / "train.jsonl"
+    SAFETY_RL_DIR / "datasets" / "safechain-subset" / "train.jsonl"
 )
 DEFAULT_TEACHER_TEMPLATE = SAFETY_RL_DIR / "format_prompt" / "safety_teacher.jinja"
 DEFAULT_OUT = SCRIPT_DIR / "outputs"

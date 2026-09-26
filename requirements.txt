@@ -13,6 +13,7 @@ pyarrow>=15.0.0
 pylatexenc
 qwen-vl-utils[decord]==0.0.14
 ray[default]
+swanlab
 tensordict
 torchdata
 transformers==4.57.3

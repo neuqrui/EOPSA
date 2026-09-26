@@ -15,7 +15,7 @@ PROJECT_DIR="$(cd "${SAFETY_RL_DIR}/../.." && pwd)"
 export PYTHONPATH="${PROJECT_DIR}:${SAFETY_RL_DIR}:${SCRIPT_DIR}:${PYTHONPATH:-}"
 
 MODEL_PATH="${MODEL_PATH:-Qwen/Qwen3-1.7B}"
-DATA="${DATA:-${SAFETY_RL_DIR}/datasets/safety_ds_safechain_dsr100_h4400_b2200/train.jsonl}"
+DATA="${DATA:-${SAFETY_RL_DIR}/datasets/safechain-subset/train.jsonl}"
 TAG="${TAG:-qwen3-1.7b}"
 N_SAMPLES="${N_SAMPLES:-200}"
 MAX_TOKENS="${MAX_TOKENS:-256}"

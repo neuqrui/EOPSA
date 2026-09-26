@@ -44,7 +44,7 @@ DEFAULT_TEACHER = SAFETY_RL_DIR / "format_prompt" / "safety_teacher.jinja"
 DEFAULT_OUT = SCRIPT_DIR / "outputs" / "dataset_taxonomy_compare"
 
 DATASETS: dict[str, Path] = {
-    "safechain": SAFETY_RL_DIR / "datasets/safety_ds_safechain_dsr100_h4400_b2200/train.jsonl",
+    "safechain": SAFETY_RL_DIR / "datasets/safechain-subset/train.jsonl",
     "star1": SAFETY_RL_DIR / "datasets/safety_ds_star1_h1000_b500/train.jsonl",
     "mix": SAFETY_RL_DIR / "datasets/opsd_mix_safechain_h4400_b1100_m1100/train.jsonl",
 }

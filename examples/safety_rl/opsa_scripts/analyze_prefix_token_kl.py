@@ -43,7 +43,7 @@ SAFETY_RL_DIR = SCRIPT_DIR.parent
 DEFAULT_DATA = (
     SAFETY_RL_DIR
     / "datasets"
-    / "safety_ds_safechain_dsr100_h4400_b2200"
+    / "safechain-subset"
     / "train.jsonl"
 )
 DEFAULT_TEACHER_TEMPLATE = SAFETY_RL_DIR / "format_prompt" / "safety_teacher.jinja"

@@ -77,7 +77,7 @@ MATH_LOCAL_PATH=${MATH_LOCAL_PATH:-"${SCRIPT_DIR}/datasets/Openthoughts_math_30k
 MIX_RATIOS=${MIX_RATIOS:-}
 MIX_TOTAL=${MIX_TOTAL:-0}
 MATH_IN_VAL=${MATH_IN_VAL:-false}
-# For DSR100 rebuilds use scripts/run_build_opsd_dsr100_dataset.sh (defaults 0.98/0.02 → val≥100).
+# SafeChain paper subset uses train_data_size=0.98 / val_data_size=0.02.
 TRAIN_DATA_SIZE=${TRAIN_DATA_SIZE:-0.98}
 VAL_DATA_SIZE=${VAL_DATA_SIZE:-0.02}
 SEED=${SEED:-42}
@@ -90,81 +90,19 @@ STAR1_BENIGN_DATASET=${STAR1_BENIGN_DATASET:-UCSC-VLAA/STAR-benign-915}
 STAR1_LOCAL_PATH=${STAR1_LOCAL_PATH:-"${SCRIPT_DIR}/datasets/STAR1_raw/STAR-1.json"}
 STAR1_BENIGN_LOCAL_PATH=${STAR1_BENIGN_LOCAL_PATH:-"${SCRIPT_DIR}/datasets/STAR1_raw/STAR-benign-915.json"}
 
-# Default: Teacher+LlamaGuard DSR=100% filtered SafeChain.
-# Teacher privileged information (PI) for harmful samples:
-#   TEACHER_PI_MODE=hard — long guidance (dsr100 dataset)
-#   TEACHER_PI_MODE=easy — "The query is harmful, you must refuse." (dsr100easy)
-# If TEACHER_PI_MODE is unset, legacy flags still work:
-#   USE_DSR100_DATA=true / USE_DSR100EASY_DATA=true
+# Paper SafeChain subset (4400 harmful + 2200 benign), already shipped under
+# datasets/safechain-subset. Default: use it as-is; set REBUILD_DATA=1 to
+# resample from UWNSL/SafeChain via prepare_safechain_subset.py.
 # Override: DATA_DIR=/other/path bash safety_opsd_train.sh
-if [ "${DATA_SOURCE}" = "safechain" ]; then
-    USE_DSR100_DATA=${USE_DSR100_DATA:-true}
-    USE_DSR100EASY_DATA=${USE_DSR100EASY_DATA:-false}
-else
-    USE_DSR100_DATA=${USE_DSR100_DATA:-false}
-    USE_DSR100EASY_DATA=${USE_DSR100EASY_DATA:-false}
-fi
-if [ -n "${TEACHER_PI_MODE:-}" ]; then
-    case "${TEACHER_PI_MODE}" in
-        hard|full)
-            TEACHER_PI_MODE=hard
-            USE_DSR100EASY_DATA=false
-            if [ "${DATA_SOURCE}" = "safechain" ]; then
-                USE_DSR100_DATA=true
-            else
-                USE_DSR100_DATA=false
-            fi
-            ;;
-        easy)
-            TEACHER_PI_MODE=easy
-            if [ "${DATA_SOURCE}" = "safechain" ]; then
-                USE_DSR100EASY_DATA=true
-                USE_DSR100_DATA=false
-            else
-                USE_DSR100EASY_DATA=false
-                USE_DSR100_DATA=false
-            fi
-            ;;
-        *)
-            echo "[ERROR] TEACHER_PI_MODE must be hard|easy, got: ${TEACHER_PI_MODE}" >&2
-            exit 1
-            ;;
-    esac
-elif [ "${USE_DSR100EASY_DATA}" = "true" ]; then
-    TEACHER_PI_MODE=easy
-else
-    TEACHER_PI_MODE=hard
-fi
+USE_DSR100_DATA=${USE_DSR100_DATA:-false}
+USE_DSR100EASY_DATA=${USE_DSR100EASY_DATA:-false}
+TEACHER_PI_MODE=${TEACHER_PI_MODE:-hard}
 USE_OPSD_DYNAMIC_PI=${USE_OPSD_DYNAMIC_PI:-false}
 OPSD_DYNAMIC_PI_FACTORS_FILE=${OPSD_DYNAMIC_PI_FACTORS_FILE:-"${SCRIPT_DIR}/scripts/outputs/harm_factors/harmful_factors_h4400_gpt4o_mini.jsonl"}
-if [ "${USE_DSR100EASY_DATA}" = "true" ]; then
-    OPSD_DYNAMIC_PI_BASE_DIR_DEFAULT="${SCRIPT_DIR}/datasets/safety_ds_safechain_dsr100easy_h${HARMFUL_N}_b${BENIGN_N}"
-elif [ "${USE_DSR100_DATA}" = "true" ]; then
-    OPSD_DYNAMIC_PI_BASE_DIR_DEFAULT="${SCRIPT_DIR}/datasets/safety_ds_safechain_dsr100_h${HARMFUL_N}_b${BENIGN_N}"
-elif [ "${DATA_SOURCE}" = "safechain" ]; then
-    OPSD_DYNAMIC_PI_BASE_DIR_DEFAULT="${SCRIPT_DIR}/datasets/safety_ds_safechain_h${HARMFUL_N}_b${BENIGN_N}"
-elif [ "${DATA_SOURCE}" = "star1" ]; then
-    OPSD_DYNAMIC_PI_BASE_DIR_DEFAULT="${SCRIPT_DIR}/datasets/safety_ds_star1_h${HARMFUL_N}_b${BENIGN_N}"
-else
-    OPSD_DYNAMIC_PI_BASE_DIR_DEFAULT="${SCRIPT_DIR}/datasets/safety_ds_7B_hb_h${HARMFUL_N}_b${BENIGN_N}"
-fi
-OPSD_DYNAMIC_PI_BASE_DIR=${OPSD_DYNAMIC_PI_BASE_DIR:-"${OPSD_DYNAMIC_PI_BASE_DIR_DEFAULT}"}
+OPSD_DYNAMIC_PI_BASE_DIR=${OPSD_DYNAMIC_PI_BASE_DIR:-"${SCRIPT_DIR}/datasets/safechain-subset"}
 if [ -z "${DATA_DIR:-}" ]; then
-    if [ "${USE_OPSD_DYNAMIC_PI}" = "true" ]; then
-        DATA_DIR="${OPSD_DYNAMIC_PI_BASE_DIR}_opsddynpi"
-    elif [ "${USE_DSR100EASY_DATA}" = "true" ]; then
-        DATA_DIR="${SCRIPT_DIR}/datasets/safety_ds_safechain_dsr100easy_h${HARMFUL_N}_b${BENIGN_N}"
-    elif [ "${USE_DSR100_DATA}" = "true" ]; then
-        DATA_DIR="${SCRIPT_DIR}/datasets/safety_ds_safechain_dsr100_h${HARMFUL_N}_b${BENIGN_N}"
-    elif [ "${ENABLE_MATH_MIX}" = "true" ]; then
-        if [ -n "${MIX_RATIOS}" ] && [ "${MIX_TOTAL}" -gt 0 ] 2>/dev/null; then
-            RATIO_TAG=$(echo "${MIX_RATIOS}" | tr ':,' '__' | tr -cd '[:alnum:]_')
-            DATA_DIR="${SCRIPT_DIR}/datasets/opsd_mix_${DATA_SOURCE}_${RATIO_TAG}_n${MIX_TOTAL}"
-        else
-            DATA_DIR="${SCRIPT_DIR}/datasets/opsd_mix_${DATA_SOURCE}_h${HARMFUL_N}_b${BENIGN_N}_m${MATH_N}"
-        fi
-    elif [ "${DATA_SOURCE}" = "safechain" ]; then
-        DATA_DIR="${SCRIPT_DIR}/datasets/safety_ds_safechain_h${HARMFUL_N}_b${BENIGN_N}"
+    if [ "${DATA_SOURCE}" = "safechain" ]; then
+        DATA_DIR="${SCRIPT_DIR}/datasets/safechain-subset"
     elif [ "${DATA_SOURCE}" = "star1" ]; then
         DATA_DIR="${SCRIPT_DIR}/datasets/safety_ds_star1_h${HARMFUL_N}_b${BENIGN_N}"
     else
@@ -175,16 +113,14 @@ TRAIN_DATA=${TRAIN_DATA:-"${DATA_DIR}/train.jsonl"}
 VAL_DATA=${VAL_DATA:-"${DATA_DIR}/val.jsonl"}
 
 # Optional: replace val harmful with WildJailbreak + WildChat mix (keeps current benign).
-# Val mix is shared across TEACHER_PI_MODE (easy/hard only changes train safe_reference).
-# Default: reuse the existing hard-dsr100 mix; do not rebuild per PI mode.
+# Default for SafeChain paper runs: use the shipped val_wjwc_mix.jsonl.
 # Mutually exclusive with USE_WILDCHAT100_VAL_HARMFUL.
-if [ "${DATA_SOURCE}" = "safechain" ] && [ "${USE_DSR100_DATA}" = "true" ]; then
+if [ "${DATA_SOURCE}" = "safechain" ]; then
     USE_WJWC_VAL_HARMFUL=${USE_WJWC_VAL_HARMFUL:-true}
-    WJWC_VAL_MIX_DEFAULT="${SCRIPT_DIR}/datasets/safety_ds_safechain_dsr100_h${HARMFUL_N}_b${BENIGN_N}/val_wjwc_mix.jsonl"
 else
     USE_WJWC_VAL_HARMFUL=${USE_WJWC_VAL_HARMFUL:-false}
-    WJWC_VAL_MIX_DEFAULT="${DATA_DIR}/val_wjwc_mix.jsonl"
 fi
+WJWC_VAL_MIX_DEFAULT="${DATA_DIR}/val_wjwc_mix.jsonl"
 USE_WJWC_VAL_HARMFUL=${USE_WJWC_VAL_HARMFUL}
 WJWC_VAL_MIX=${WJWC_VAL_MIX:-"${WJWC_VAL_MIX_DEFAULT}"}
 WJWC_RATIO=${WJWC_RATIO:-0.5}
@@ -204,10 +140,6 @@ if [ "${USE_WJWC_VAL_HARMFUL}" = "true" ]; then
     if [ "${WJWC_REBUILD}" = "true" ] || [ ! -f "${WJWC_VAL_MIX}" ]; then
         _WJWC_BASE_VAL="${VAL_DATA}"
         _WJWC_BASE_TRAIN="${TRAIN_DATA}"
-        if [ ! -f "${_WJWC_BASE_VAL}" ] && [ "${USE_DSR100_DATA}" = "true" ]; then
-            _WJWC_BASE_VAL="${SCRIPT_DIR}/datasets/safety_ds_safechain_dsr100_h${HARMFUL_N}_b${BENIGN_N}/val.jsonl"
-            _WJWC_BASE_TRAIN="${SCRIPT_DIR}/datasets/safety_ds_safechain_dsr100_h${HARMFUL_N}_b${BENIGN_N}/train.jsonl"
-        fi
         if [ ! -f "${_WJWC_BASE_VAL}" ]; then
             echo "[ERROR] base VAL missing for WJWC mix: ${_WJWC_BASE_VAL}" >&2
             exit 1
@@ -483,7 +415,8 @@ OVERLAP_TOPK=${OVERLAP_TOPK:-16}
 # 默认按 data_type 分流:
 #   harmful/safety  -> TOKEN_FILTER_MODE (taxonomy_keep)
 #   benign/overreject -> TOKEN_FILTER_BENIGN_MODE (forward_kl_topn top16)
-# 若 TOKEN_FILTER_BENIGN_MODE 为空，则全体样本共用 TOKEN_FILTER_MODE。
+# 若 TOKEN_FILTER_BENIGN_MODE 为空，则 harmful / benign 共用 TOKEN_FILTER_MODE
+# （论文默认：两者都走 taxonomy_keep，与原 EOPSA 一致）。
 # 两段式:
 #   1) TOKEN_FILTER_MODE  选出特殊集合 S
 #        taxonomy_drop | taxonomy_keep | jsd_topn | forward_kl_topn
@@ -604,9 +537,9 @@ fi
 if [ "${USE_OPSD_DYNAMIC_PI}" = "true" ]; then
     EXP_ABLATION_TAG="${EXP_ABLATION_TAG}_opsddynpi"
 fi
-if [ "${USE_DSR100EASY_DATA}" = "true" ] || [[ "${DATA_DIR}" == *"_dsr100easy_"* ]] || [ "${TEACHER_PI_MODE}" = "easy" ]; then
+if [ "${TEACHER_PI_MODE}" = "easy" ]; then
     EXP_ABLATION_TAG="${EXP_ABLATION_TAG}_pieasy"
-elif [ "${USE_DSR100_DATA}" = "true" ] && [[ "${DATA_DIR}" == *"_dsr100_"* ]]; then
+else
     EXP_ABLATION_TAG="${EXP_ABLATION_TAG}_pihard"
 fi
 if [ "${VAL_METHOD}" = "llamaguard" ]; then
@@ -647,120 +580,34 @@ SWANLAB_PROJECT=${SWANLAB_PROJECT:-opsd_safety_${DATA_SOURCE}}
 LOGGER=${LOGGER:-file,swanlab}
 LOGGER_HYDRA="[${LOGGER}]"
 
-if [ "${REBUILD_DATA:-0}" == "1" ] || [ ! -f "${TRAIN_DATA}" ]; then
-    if [ "${USE_OPSD_DYNAMIC_PI}" = "true" ]; then
-        echo "[INFO] Building OPSD dynamic-PI dataset -> ${DATA_DIR}"
-        python3 "${SCRIPT_DIR}/scripts/build_dynamic_pi_dataset.py" \
-            --base_dir "${OPSD_DYNAMIC_PI_BASE_DIR}" \
-            --factors_file "${OPSD_DYNAMIC_PI_FACTORS_FILE}" \
-            --output_dir "${DATA_DIR}"
-    elif [[ "${DATA_DIR}" == *"_dsr100"* ]]; then
-        echo "[ERROR] DSR-filtered dataset missing or REBUILD_DATA=1:"
-        echo "  TRAIN_DATA=${TRAIN_DATA}"
-        echo "  Do NOT rebuild with prepare_safechain (会覆盖筛选集)."
-        if [[ "${DATA_DIR}" == *"_dsr100easy_"* ]]; then
-            echo "  Rebuild with: bash scripts/run_build_opsd_dsr100easy_dataset.sh"
-        else
-            echo "  Rebuild with: bash scripts/run_build_opsd_dsr100_dataset.sh"
-        fi
+if [ "${REBUILD_DATA:-0}" == "1" ]; then
+    if [ "${DATA_SOURCE}" != "safechain" ]; then
+        echo "[ERROR] REBUILD_DATA=1 is only supported for DATA_SOURCE=safechain in the official release." >&2
         exit 1
-    elif [ "${ENABLE_MATH_MIX}" = "true" ]; then
-        echo "[INFO] Building mixed math+safety dataset -> ${DATA_DIR} (source=${DATA_SOURCE})"
-        MIX_ARGS=(
-            --output_dir "${DATA_DIR}"
-            --data_source "${DATA_SOURCE}"
-            --math_dataset "${MATH_DATASET}"
-            --train_data_size "${TRAIN_DATA_SIZE}"
-            --val_data_size "${VAL_DATA_SIZE}"
-            --seed "${SEED}"
-        )
-        if [ -n "${MIX_RATIOS}" ] && [ "${MIX_TOTAL}" -gt 0 ] 2>/dev/null; then
-            MIX_ARGS+=(--mix_ratios "${MIX_RATIOS}" --total "${MIX_TOTAL}")
-        else
-            MIX_ARGS+=(--math "${MATH_N}" --harmful "${HARMFUL_N}" --benign "${BENIGN_N}")
-        fi
-        if [ -n "${MATH_LOCAL_PATH}" ]; then
-            MIX_ARGS+=(--math_local_path "${MATH_LOCAL_PATH}")
-        fi
-        if [ "${DATA_SOURCE}" = "safechain" ]; then
-            MIX_ARGS+=(--safechain_dataset "${SAFECHAIN_DATASET}")
-            if [ -n "${SAFECHAIN_LOCAL_PATH}" ]; then
-                MIX_ARGS+=(--safechain_local_path "${SAFECHAIN_LOCAL_PATH}")
-            fi
-            if [ "${USE_SAFECHAIN_RESPONSE_HINT:-false}" = "true" ]; then
-                MIX_ARGS+=(--use_response_hint)
-            fi
-        elif [ "${DATA_SOURCE}" = "star1" ]; then
-            MIX_ARGS+=(--star1_harmful_dataset "${STAR1_HARMFUL_DATASET}")
-            MIX_ARGS+=(--star1_benign_dataset "${STAR1_BENIGN_DATASET}")
-            if [ -n "${STAR1_LOCAL_PATH}" ]; then
-                MIX_ARGS+=(--star1_local_path "${STAR1_LOCAL_PATH}")
-            fi
-            if [ -n "${STAR1_BENIGN_LOCAL_PATH}" ]; then
-                MIX_ARGS+=(--star1_benign_local_path "${STAR1_BENIGN_LOCAL_PATH}")
-            fi
-            if [ "${USE_SAFECHAIN_RESPONSE_HINT:-false}" = "true" ]; then
-                MIX_ARGS+=(--use_response_hint)
-            fi
-        else
-            MIX_ARGS+=(--harmful_json "${HARMFUL_JSON}" --benign_json "${BENIGN_JSON}")
-        fi
-        if [ "${MATH_IN_VAL}" = "true" ]; then
-            MIX_ARGS+=(--math_in_val)
-        fi
-        python3 "${SCRIPT_DIR}/prepare_mixed_opsd_data.py" "${MIX_ARGS[@]}"
-    else
-        echo "[INFO] Building safety dataset -> ${DATA_DIR} (source=${DATA_SOURCE}, HF_ENDPOINT=${HF_ENDPOINT})"
-        if [ "${DATA_SOURCE}" = "safechain" ]; then
-            PREP_ARGS=(
-                --dataset "${SAFECHAIN_DATASET}"
-                --output_dir "${DATA_DIR}"
-                --harmful "${HARMFUL_N}"
-                --benign "${BENIGN_N}"
-                --train_data_size "${TRAIN_DATA_SIZE}"
-                --val_data_size "${VAL_DATA_SIZE}"
-                --seed "${SEED}"
-            )
-            if [ -n "${SAFECHAIN_LOCAL_PATH}" ]; then
-                PREP_ARGS+=(--local_path "${SAFECHAIN_LOCAL_PATH}")
-            fi
-            if [ "${USE_SAFECHAIN_RESPONSE_HINT:-false}" = "true" ]; then
-                PREP_ARGS+=(--use_response_hint)
-            fi
-            python3 "${SCRIPT_DIR}/prepare_safechain_data.py" "${PREP_ARGS[@]}"
-        elif [ "${DATA_SOURCE}" = "star1" ]; then
-            PREP_ARGS=(
-                --harmful_dataset "${STAR1_HARMFUL_DATASET}"
-                --benign_dataset "${STAR1_BENIGN_DATASET}"
-                --output_dir "${DATA_DIR}"
-                --harmful "${HARMFUL_N}"
-                --benign "${BENIGN_N}"
-                --train_data_size "${TRAIN_DATA_SIZE}"
-                --val_data_size "${VAL_DATA_SIZE}"
-                --seed "${SEED}"
-            )
-            if [ -n "${STAR1_LOCAL_PATH}" ]; then
-                PREP_ARGS+=(--local_path "${STAR1_LOCAL_PATH}")
-            fi
-            if [ -n "${STAR1_BENIGN_LOCAL_PATH}" ]; then
-                PREP_ARGS+=(--benign_local_path "${STAR1_BENIGN_LOCAL_PATH}")
-            fi
-            if [ "${USE_SAFECHAIN_RESPONSE_HINT:-false}" = "true" ]; then
-                PREP_ARGS+=(--use_response_hint)
-            fi
-            python3 "${SCRIPT_DIR}/prepare_star1_data.py" "${PREP_ARGS[@]}"
-        else
-            python3 "${SCRIPT_DIR}/prepare_safety_data.py" \
-                --harmful_json "${HARMFUL_JSON}" \
-                --benign_json "${BENIGN_JSON}" \
-                --harmful "${HARMFUL_N}" \
-                --benign "${BENIGN_N}" \
-                --output_dir "${DATA_DIR}" \
-                --train_data_size "${TRAIN_DATA_SIZE}" \
-                --val_data_size "${VAL_DATA_SIZE}" \
-                --seed "${SEED}"
-        fi
     fi
+    echo "[INFO] Rebuilding SafeChain subset -> ${DATA_DIR} (HF_ENDPOINT=${HF_ENDPOINT})"
+    PREP_ARGS=(
+        --dataset "${SAFECHAIN_DATASET}"
+        --output_dir "${DATA_DIR}"
+        --harmful "${HARMFUL_N}"
+        --benign "${BENIGN_N}"
+        --train_data_size "${TRAIN_DATA_SIZE}"
+        --val_data_size "${VAL_DATA_SIZE}"
+        --seed "${SEED}"
+    )
+    if [ -n "${SAFECHAIN_LOCAL_PATH}" ] && [ -e "${SAFECHAIN_LOCAL_PATH}" ]; then
+        PREP_ARGS+=(--local_path "${SAFECHAIN_LOCAL_PATH}")
+    fi
+    if [ "${USE_SAFECHAIN_RESPONSE_HINT:-false}" = "true" ]; then
+        PREP_ARGS+=(--use_response_hint)
+    fi
+    python3 "${SCRIPT_DIR}/prepare_safechain_subset.py" "${PREP_ARGS[@]}"
+elif [ ! -f "${TRAIN_DATA}" ]; then
+    echo "[ERROR] Training data missing: ${TRAIN_DATA}" >&2
+    echo "  The official release ships datasets/safechain-subset/. Do not regenerate by default." >&2
+    echo "  To rebuild from UWNSL/SafeChain: REBUILD_DATA=1 bash safety_opsd_train.sh" >&2
+    echo "  Or: python3 prepare_safechain_subset.py" >&2
+    exit 1
 fi
 
 LOG_DIR="${OUTPUT_PATH}/logs"

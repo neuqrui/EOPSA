@@ -125,22 +125,33 @@ def _build_stats(
     token_div: torch.Tensor,
     action: str,
 ) -> dict[str, float]:
+    # Match the original EOPSA actor contract: tokens_after / total_kl / kept_kl /
+    # filtered_kl are required by update_policy_opsd. Benign rows use the same
+    # taxonomy_keep path as harmful when TOKEN_FILTER_BENIGN_MODE is unset.
     del action_mask, action
     tokens_before = float(base_mask.sum().item())
     tokens_main = float(main_mask.sum().item())
     dropped = base_mask * (1.0 - main_mask)
     tokens_dropped = float(dropped.sum().item())
-    total_kl = float((token_div * base_mask).sum().item()) + 1e-8
+    total_kl = float((token_div * base_mask).sum().item())
+    kept_kl = float((token_div * main_mask).sum().item())
+    filtered_kl = float((token_div * dropped).sum().item())
+    denom = total_kl + 1e-8
     return {
         "tokens_before": tokens_before,
+        "tokens_after": tokens_main,
+        "tokens_filtered": tokens_before - tokens_main,
+        "total_kl": total_kl,
+        "filtered_kl": filtered_kl,
+        "kept_kl": kept_kl,
         "tokens_main": tokens_main,
         "tokens_alt": 0.0,
         "tokens_dropped": tokens_dropped,
         "tokens_trained": tokens_main,
         "token_keep_ratio": tokens_main / max(tokens_before, 1.0),
         "token_train_ratio": tokens_main / max(tokens_before, 1.0),
-        "filtered_kl_share": float((token_div * dropped).sum().item()) / total_kl,
-        "kept_kl_share": float((token_div * main_mask).sum().item()) / total_kl,
+        "filtered_kl_share": filtered_kl / denom,
+        "kept_kl_share": kept_kl / denom,
     }
 
 
