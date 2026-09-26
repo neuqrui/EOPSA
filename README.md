@@ -6,8 +6,8 @@
 
 <p align="center">
   <a href="#citation">📄 Paper</a> &nbsp;·&nbsp;
-  <a href=".">💻 Code</a> &nbsp;·&nbsp;
-  <a href="https://huggingface.co/collections/neuqrui/eopsa">🤗 Models</a>
+  <a href="."><img src="assets/github.svg" height="18" align="absmiddle" alt="GitHub"> Code</a> &nbsp;·&nbsp;
+  <a href="https://huggingface.co/collections/neuqrui/eopsa"><img src="assets/huggingface.svg" height="18" align="absmiddle" alt="Hugging Face"> Models</a>
 </p>
 </div>
 
