@@ -170,9 +170,13 @@ This repository is released under the Apache License 2.0. It includes a modified
 <a id="citation"></a>
 
 ```bibtex
-@misc{eopsa2026,
-  title  = {EOPSA: Efficient On-Policy Self-Distilled Safety Alignment},
-  author = {},
-  year   = {2026}
+@misc{liu2026eopsaefficientonpolicyselfdistilled,
+  title         = {EOPSA: Efficient On-Policy Self-Distilled Safety Alignment},
+  author        = {Qirui Liu and Yichen Sun and Yan Wang and Yu Mi and Wei Cao and Yue Shen and Zhixuan Chu and Kui Ren},
+  year          = {2026},
+  eprint        = {2609.34519},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.AI},
+  url           = {https://arxiv.org/abs/2609.34519}
 }
 ```
