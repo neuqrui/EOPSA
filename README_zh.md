@@ -6,8 +6,8 @@
 </div>
 
 <p align="center">
-  <a href="README.md#citation">📄 Paper</a> &nbsp;·&nbsp;
-  <a href="."><img src="assets/github.svg" height="18" align="absmiddle" alt="GitHub"> Code</a> &nbsp;·&nbsp;
+  <a href="https://arxiv.org/abs/2609.34519">📄 Paper</a> &nbsp;·&nbsp;
+  <a href="https://github.com/neuqrui/EOPSA"><img src="assets/github.svg" height="18" align="absmiddle" alt="GitHub"> Code</a> &nbsp;·&nbsp;
   <a href="https://huggingface.co/collections/neuqrui/eopsa"><img src="assets/huggingface.svg" height="18" align="absmiddle" alt="Hugging Face"> Models</a>
 </p>
 
