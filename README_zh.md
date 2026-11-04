@@ -16,7 +16,6 @@
   <a href="https://arxiv.org/abs/2609.34519"><img src="https://img.shields.io/badge/Paper-Read-b31b1b?logo=arxiv&amp;logoColor=white" alt="Paper" height="23"></a>
   <a href="https://github.com/neuqrui/EOPSA"><img src="https://img.shields.io/badge/Code-GitHub-383743?logo=github&amp;logoColor=white" alt="Code" height="23"></a>
   <a href="https://huggingface.co/collections/neuqrui/eopsa"><img src="https://img.shields.io/badge/Models-Hugging%20Face-ffc857?logo=huggingface&amp;logoColor=white" alt="Models" height="23"></a>
-  <a href="https://github.com/neuqrui/EOPSA/blob/main/assets/training_dynamics.png"><img src="https://img.shields.io/badge/Training-Curves-8967b6" alt="Training curves" height="23"></a>
 </p>
 </div>
 
