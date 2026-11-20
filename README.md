@@ -27,7 +27,7 @@
 
 ### EOPSA Project Overview
 
-[![Watch the EOPSA project overview](assets/demo/eopsa-overview.jpg)](assets/demo/eopsa-overview.mp4)
+https://github.com/user-attachments/assets/cd4840c5-0205-47fc-9f08-1a73866256a7
 
 [Download the 1080p video (1:18)](https://github.com/neuqrui/EOPSA/raw/refs/heads/main/assets/demo/eopsa-overview.mp4)
 

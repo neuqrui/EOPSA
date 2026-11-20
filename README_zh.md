@@ -27,7 +27,7 @@
 
 ## 🎬 演示
 
-[![观看 EOPSA 项目介绍视频](assets/demo/eopsa-overview.jpg)](assets/demo/eopsa-overview.mp4)
+https://github.com/user-attachments/assets/cd4840c5-0205-47fc-9f08-1a73866256a7
 
 [下载 1080p 视频（1 分 18 秒）](https://github.com/neuqrui/EOPSA/raw/refs/heads/main/assets/demo/eopsa-overview.mp4)
 
