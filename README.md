@@ -21,7 +21,11 @@
 
 ## 📣 News
 
-- **[2026-11]** The [EOPSA project overview video](#-demo) is now available.
+- **[2026-09-28]** Submitted the [first version of the paper](https://arxiv.org/abs/2609.34519v1) to arXiv.
+- **[2026-09-17]** Uploaded the [Qwen3-32B](https://huggingface.co/neuqrui/EOPSA-Qwen3-32B) checkpoint to Hugging Face.
+- **[2026-08-22]** Uploaded the [DeepSeek-R1-7B](https://huggingface.co/neuqrui/EOPSA-DeepSeek-R1-7B) checkpoint to Hugging Face.
+- **[2026-08-10]** Uploaded the [Qwen3-14B](https://huggingface.co/neuqrui/EOPSA-Qwen3-14B) checkpoint to Hugging Face.
+- **[2026-08-08]** Uploaded the [Qwen3-1.7B](https://huggingface.co/neuqrui/EOPSA-Qwen3-1.7B) and [Qwen3-4B](https://huggingface.co/neuqrui/EOPSA-Qwen3-4B) checkpoints to Hugging Face.
 
 ## 🎬 Demo
 

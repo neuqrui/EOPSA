@@ -23,7 +23,11 @@
 
 ## 📣 动态
 
-- **[2026-11]** [EOPSA 项目介绍视频](#-演示)已发布。
+- **[2026-09-28]** [论文初版](https://arxiv.org/abs/2609.34519v1)提交至 arXiv。
+- **[2026-09-17]** 在 Hugging Face 上传 [Qwen3-32B](https://huggingface.co/neuqrui/EOPSA-Qwen3-32B) 模型权重。
+- **[2026-08-22]** 在 Hugging Face 上传 [DeepSeek-R1-7B](https://huggingface.co/neuqrui/EOPSA-DeepSeek-R1-7B) 模型权重。
+- **[2026-08-10]** 在 Hugging Face 上传 [Qwen3-14B](https://huggingface.co/neuqrui/EOPSA-Qwen3-14B) 模型权重。
+- **[2026-08-08]** 在 Hugging Face 上传 [Qwen3-1.7B](https://huggingface.co/neuqrui/EOPSA-Qwen3-1.7B)、[Qwen3-4B](https://huggingface.co/neuqrui/EOPSA-Qwen3-4B) 模型权重。
 
 ## 🎬 演示
 
