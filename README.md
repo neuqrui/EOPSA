@@ -19,6 +19,18 @@
 </p>
 </div>
 
+## 📣 News
+
+- **[2026-11]** The [EOPSA project overview video](#-demo) is now available.
+
+## 🎬 Demo
+
+### EOPSA Project Overview
+
+[![Watch the EOPSA project overview](assets/demo/eopsa-overview.jpg)](assets/demo/eopsa-overview.mp4)
+
+[Download the 1080p video (1:18)](https://github.com/neuqrui/EOPSA/raw/refs/heads/main/assets/demo/eopsa-overview.mp4)
+
 ## 💡 Overview
 
 On-policy self-distillation (OPSD) can provide dense, token-level safety supervision, but full-sequence distillation is both expensive and noisy: teacher rescue collapses on long unaligned prefixes, and privileged prompts inject stylistic shifts that dilute genuine safety gradients.
